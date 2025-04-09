@@ -46,7 +46,7 @@ export default function SearchApp(): JSX.Element {
     setError(null);
     
     try {
-      const response = await fetch('https://test-kappa-dun-81.vercel.app/api/recommend', {
+      const response = await fetch('https://shl-live-phli.vercel.app/api/recommend', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

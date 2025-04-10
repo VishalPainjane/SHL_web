@@ -1,8 +1,22 @@
-'use client'
+"use client";
 
-import React, { JSX } from 'react';
-import { useState, useEffect, KeyboardEvent, ChangeEvent, MouseEvent } from 'react';
-import { Search, Download, X, ChevronDown, ChevronUp, Loader, ExternalLink } from 'lucide-react';
+import React, { JSX } from "react";
+import {
+  useState,
+  useEffect,
+  KeyboardEvent,
+  ChangeEvent,
+  MouseEvent,
+} from "react";
+import {
+  Search,
+  Download,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Loader,
+  ExternalLink,
+} from "lucide-react";
 
 // Define types for result items
 interface DownloadItem {
@@ -28,41 +42,63 @@ interface ResultItem {
 // Define type for sort configuration
 interface SortConfig {
   key: string | null;
-  direction: 'ascending' | 'descending';
+  direction: "ascending" | "descending";
 }
 
+// Test type mapping
+const TEST_TYPE_MAP: Record<string, string> = {
+  A: "Ability & Aptitude",
+  B: "Biodata & Situational Judgement",
+  C: "Competencies",
+  D: "Development & 360",
+  E: "Assessment Exercises",
+  K: "Knowledge & Skills",
+  P: "Personality & Behavior",
+  S: "Simulations",
+};
+
 export default function SearchApp(): JSX.Element {
-  const [query, setQuery] = useState<string>('');
+  const [query, setQuery] = useState<string>("");
   const [results, setResults] = useState<ResultItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: null,
+    direction: "ascending",
+  });
 
   const handleSearch = async (): Promise<void> => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('https://shl-live-phli.vercel.app/api/recommend', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query }),
-      });
-      
+      const response = await fetch(
+        "https://shl-live-phli.vercel.app/recommend",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query }),
+        }
+      );
+
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch results');
+        throw new Error(data.error || "Failed to fetch results");
       }
-      
+
       setResults(data.results || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while fetching data');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching data"
+      );
       setResults([]);
     } finally {
       setLoading(false);
@@ -70,32 +106,33 @@ export default function SearchApp(): JSX.Element {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
 
   const handleSort = (key: string): void => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-    
+    let direction: "ascending" | "descending" = "ascending";
+
     if (sortConfig.key === key) {
-      direction = sortConfig.direction === 'ascending' ? 'descending' : 'ascending';
+      direction =
+        sortConfig.direction === "ascending" ? "descending" : "ascending";
     }
-    
+
     setSortConfig({ key, direction });
   };
 
   const sortedResults = [...results].sort((a: ResultItem, b: ResultItem) => {
     if (!sortConfig.key) return 0;
-    
-    const aValue = a[sortConfig.key] || '';
-    const bValue = b[sortConfig.key] || '';
-    
+
+    const aValue = a[sortConfig.key] || "";
+    const bValue = b[sortConfig.key] || "";
+
     if (aValue < bValue) {
-      return sortConfig.direction === 'ascending' ? -1 : 1;
+      return sortConfig.direction === "ascending" ? -1 : 1;
     }
     if (aValue > bValue) {
-      return sortConfig.direction === 'ascending' ? 1 : -1;
+      return sortConfig.direction === "ascending" ? 1 : -1;
     }
     return 0;
   });
@@ -104,13 +141,37 @@ export default function SearchApp(): JSX.Element {
     setExpandedRow(expandedRow === index ? null : index);
   };
 
+  // Function to format test types by mapping code letters to full descriptions
+  const formatTestTypes = (types: string | undefined): JSX.Element => {
+    if (!types) return <span>N/A</span>;
+
+    // Split by commas, map each code to its description, and join back
+    return (
+      <>
+        {types.split(",").map((type, index) => {
+          const trimmedType = type.trim();
+          const fullDescription = TEST_TYPE_MAP[trimmedType] || trimmedType;
+
+          return (
+            <div key={index} className="flex items-center gap-1 mb-1">
+              <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-600 text-white text-xs font-bold">
+                {trimmedType}
+              </span>
+              <span>{fullDescription}</span>
+            </div>
+          );
+        })}
+      </>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
           Solution Finder
         </h1>
-        
+
         <div className="mb-10 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -119,14 +180,16 @@ export default function SearchApp(): JSX.Element {
             <input
               type="text"
               value={query}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setQuery(e.target.value)
+              }
               onKeyDown={handleKeyDown}
               placeholder="Enter your search query..."
               className="bg-gray-800/70 backdrop-blur-sm text-gray-100 w-full pl-12 pr-12 py-4 rounded-xl border border-gray-700/50 focus:outline-none focus:ring-2 focus:border-transparent focus:ring-blue-500 shadow-md transition-all"
             />
             {query && (
               <button
-                onClick={() => setQuery('')}
+                onClick={() => setQuery("")}
                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-200 transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -163,34 +226,46 @@ export default function SearchApp(): JSX.Element {
             <table className="w-full border-collapse">
               <thead className="bg-gradient-to-r from-gray-800 to-gray-800/80">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-700/40 transition-colors" onClick={() => handleSort('name')}>
+                  <th
+                    className="px-6 py-4 text-left text-sm font-semibold text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-700/40 transition-colors"
+                    onClick={() => handleSort("name")}
+                  >
                     <div className="flex items-center gap-2">
                       Name
-                      {sortConfig.key === 'name' && (
-                        sortConfig.direction === 'ascending' ? 
-                          <ChevronUp className="h-4 w-4" /> : 
+                      {sortConfig.key === "name" &&
+                        (sortConfig.direction === "ascending" ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
                           <ChevronDown className="h-4 w-4" />
-                      )}
+                        ))}
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-700/40 transition-colors" onClick={() => handleSort('test_types')}>
+                  <th
+                    className="px-6 py-4 text-left text-sm font-semibold text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-700/40 transition-colors"
+                    onClick={() => handleSort("test_types")}
+                  >
                     <div className="flex items-center gap-2">
                       Test Types
-                      {sortConfig.key === 'test_types' && (
-                        sortConfig.direction === 'ascending' ? 
-                          <ChevronUp className="h-4 w-4" /> : 
+                      {sortConfig.key === "test_types" &&
+                        (sortConfig.direction === "ascending" ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
                           <ChevronDown className="h-4 w-4" />
-                      )}
+                        ))}
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-700/40 transition-colors" onClick={() => handleSort('remote_testing')}>
+                  <th
+                    className="px-6 py-4 text-left text-sm font-semibold text-gray-200 uppercase tracking-wider cursor-pointer hover:bg-gray-700/40 transition-colors"
+                    onClick={() => handleSort("remote_testing")}
+                  >
                     <div className="flex items-center gap-2">
                       Remote Testing
-                      {sortConfig.key === 'remote_testing' && (
-                        sortConfig.direction === 'ascending' ? 
-                          <ChevronUp className="h-4 w-4" /> : 
+                      {sortConfig.key === "remote_testing" &&
+                        (sortConfig.direction === "ascending" ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
                           <ChevronDown className="h-4 w-4" />
-                      )}
+                        ))}
                     </div>
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-200 uppercase tracking-wider">
@@ -201,23 +276,35 @@ export default function SearchApp(): JSX.Element {
               <tbody className="divide-y divide-gray-700/50">
                 {sortedResults.map((item, index) => (
                   <React.Fragment key={index}>
-                    <tr 
-                      className={`bg-gray-800/30 hover:bg-gray-700/20 transition-colors cursor-pointer ${expandedRow === index ? 'bg-gray-700/40' : ''}`}
+                    <tr
+                      className={`bg-gray-800/30 hover:bg-gray-700/20 transition-colors cursor-pointer ${
+                        expandedRow === index ? "bg-gray-700/40" : ""
+                      }`}
                       onClick={() => toggleRowExpansion(index)}
                     >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-200">{item.name}</td>
-                      <td className="px-6 py-4 text-sm text-gray-300">{item.test_types || 'N/A'}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-200">
+                        {item.name}
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-300">
-                        <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${item.remote_testing === 'Yes' ? 'bg-green-900/30 text-green-200 border border-green-700/50' : 'bg-red-900/30 text-red-200 border border-red-700/50'}`}>
-                          {item.remote_testing || 'N/A'}
+                        {formatTestTypes(item.test_types)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-300">
+                        <span
+                          className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+                            item.remote_testing === "Yes"
+                              ? "bg-green-900/30 text-green-200 border border-green-700/50"
+                              : "bg-red-900/30 text-red-200 border border-red-700/50"
+                          }`}
+                        >
+                          {item.remote_testing || "N/A"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-300">
                         <div className="flex gap-3">
-                          <button 
+                          <button
                             onClick={(e: MouseEvent) => {
                               e.stopPropagation();
-                              if (item.url) window.open(item.url, '_blank');
+                              if (item.url) window.open(item.url, "_blank");
                             }}
                             className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
                           >
@@ -230,12 +317,17 @@ export default function SearchApp(): JSX.Element {
                               toggleRowExpansion(index);
                             }}
                             className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-                            aria-label={expandedRow === index ? "Collapse details" : "Expand details"}
-                          >
-                            {expandedRow === index ? 
-                              <ChevronUp className="h-5 w-5" /> : 
-                              <ChevronDown className="h-5 w-5" />
+                            aria-label={
+                              expandedRow === index
+                                ? "Collapse details"
+                                : "Expand details"
                             }
+                          >
+                            {expandedRow === index ? (
+                              <ChevronUp className="h-5 w-5" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -246,39 +338,63 @@ export default function SearchApp(): JSX.Element {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                             <div className="space-y-3">
                               <div>
-                                <h4 className="font-semibold text-blue-400 mb-2">Description</h4>
-                                <p className="text-sm text-gray-300 leading-relaxed">{item.description || 'No description available'}</p>
+                                <h4 className="font-semibold text-blue-400 mb-2">
+                                  Description
+                                </h4>
+                                <p className="text-sm text-gray-300 leading-relaxed">
+                                  {item.description ||
+                                    "No description available"}
+                                </p>
                               </div>
-                              
+
                               <div>
-                                <h4 className="font-semibold text-blue-400 mb-2">Key Details</h4>
+                                <h4 className="font-semibold text-blue-400 mb-2">
+                                  Key Details
+                                </h4>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                   <div className="text-gray-400">Duration:</div>
-                                  <div className="text-gray-200">{item.duration || 'N/A'}</div>
-                                  
-                                  <div className="text-gray-400">Job Levels:</div>
-                                  <div className="text-gray-200">{item.job_levels || 'N/A'}</div>
-                                  
-                                  <div className="text-gray-400">Adaptive IRT:</div>
-                                  <div className="text-gray-200">{item.adaptive_irt || 'N/A'}</div>
+                                  <div className="text-gray-200">
+                                    {item.duration || "N/A"}
+                                  </div>
+
+                                  <div className="text-gray-400">
+                                    Job Levels:
+                                  </div>
+                                  <div className="text-gray-200">
+                                    {item.job_levels || "N/A"}
+                                  </div>
+
+                                  <div className="text-gray-400">
+                                    Adaptive IRT:
+                                  </div>
+                                  <div className="text-gray-200">
+                                    {item.adaptive_irt || "N/A"}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                            
+
                             <div className="space-y-3">
                               {item.downloads && item.downloads.length > 0 && (
                                 <div>
-                                  <h4 className="font-semibold text-blue-400 mb-2">Downloads</h4>
+                                  <h4 className="font-semibold text-blue-400 mb-2">
+                                    Downloads
+                                  </h4>
                                   <ul className="space-y-2">
                                     {item.downloads.map((download, i) => (
-                                      <li key={i} className="flex items-center gap-2">
+                                      <li
+                                        key={i}
+                                        className="flex items-center gap-2"
+                                      >
                                         <Download className="h-4 w-4 text-blue-400" />
-                                        <a 
-                                          href={download.url} 
-                                          target="_blank" 
+                                        <a
+                                          href={download.url}
+                                          target="_blank"
                                           rel="noopener noreferrer"
                                           className="text-sm text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-                                          onClick={(e: MouseEvent) => e.stopPropagation()}
+                                          onClick={(e: MouseEvent) =>
+                                            e.stopPropagation()
+                                          }
                                         >
                                           {download.title} ({download.language})
                                         </a>
@@ -301,9 +417,13 @@ export default function SearchApp(): JSX.Element {
           !loading && (
             <div className="text-center p-8 bg-gray-800/30 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-inner">
               {query.trim() ? (
-                <p className="text-gray-300">No results found. Try a different search term.</p>
+                <p className="text-gray-300">
+                  No results found. Try a different search term.
+                </p>
               ) : (
-                <p className="text-gray-300">Enter a search term and click Search to find solutions.</p>
+                <p className="text-gray-300">
+                  Enter a search term and click Search to find solutions.
+                </p>
               )}
             </div>
           )
